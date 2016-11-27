@@ -1,0 +1,16 @@
+.screenContainer {
+  display: inline-block;
+  width: 70%;
+  height: 500px;
+}
+
+.playlistContainer {
+  display: inline-block;
+  width: 30%;
+  height: 500px;
+}
+
+.controlPanelContainer {
+  width: 100%;
+}
+
