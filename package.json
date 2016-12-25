@@ -141,10 +141,13 @@
     "webpack-validator": "^2.2.9"
   },
   "dependencies": {
+    "drivelist": "^5.0.4",
     "electron-debug": "^1.0.1",
     "font-awesome": "^4.7.0",
+    "rc-tree": "^1.4.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
+    "react-modal": "^1.5.2",
     "react-redux": "^4.4.5",
     "react-router": "^3.0.0",
     "react-router-redux": "^4.0.6",

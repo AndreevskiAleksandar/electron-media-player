@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
-import Playlist from './Playlist'
-import ControlPanel from './ControlPanel'
-import Screen from './Screen'
+import Playlist from './Playlist';
+import ControlPanel from './ControlPanel';
+import Screen from './Screen';
 import styles from './MediaPlayer.css';
 import fs from 'fs';
 
@@ -16,11 +16,11 @@ export default class MediaPlayer extends Component {
   }
 
 
-  stop() {
+  stop = () => {
     this.state.source.stop();
-  }
+  };
 
-  play(buffer) {
+  play = (buffer) => {
     if (this.state.source) {
       this.stop();
     }
@@ -36,10 +36,10 @@ export default class MediaPlayer extends Component {
     this.gainNode.connect(this.audioContext.destination);
     // Play immediately
     this.state.source.start(0);
-  }
+  };
 
 
-  playByteArray(byteArray) {
+  playByteArray = (byteArray) => {
 
     let arrayBuffer = new ArrayBuffer(byteArray.length);
     let bufferView = new Uint8Array(arrayBuffer);
@@ -50,48 +50,55 @@ export default class MediaPlayer extends Component {
     this.audioContext.decodeAudioData(arrayBuffer, (buffer)=> {
       this.play(buffer);
     });
-  }
+  };
 
-  playAudioFile() {
-    var path = "D:\\Muzika\\Atreyu - The Crimson.mp3";
-    fs.openSync(path, 'r'); //throws error if file doesn't exist
-    var data = fs.readFileSync(path); //file exists, get the contents
+  playAudioFile = (file) => {
+    if (this.state.source) {
+      this.stop();
+    }
+    fs.openSync(`${file}`, 'r'); //throws error if file doesn't exist
+    var data = fs.readFileSync(`${file}`); //file exists, get the contents
     this.playByteArray(data);
-  }
+  };
 
 
-  onPreviousEvent(e) {
+  onItemClickEvent = (item) => {
+    console.log(item);
+    this.playAudioFile(item);
+  };
+
+  onPreviousEvent = (e) => {
     console.log("Previous", e)
-  }
+  };
 
-  onNextEvent(e) {
+  onNextEvent = (e) => {
     console.log("Next", e)
-  }
+  };
 
-  onPlayEvent(e) {
+  onPlayEvent = (e) => {
     this.playAudioFile();
-  }
+  };
 
-  onStopEvent(e) {
+  onStopEvent = (e) => {
     console.log("Stop", e);
     this.stop();
-  }
+  };
 
-  onPauseEvent(e) {
+  onPauseEvent = (e) => {
     console.log("Pause", e)
-  }
+  };
 
-  onMuteEvent(e) {
+  onMuteEvent = (e) => {
     console.log("Mute", e)
-  }
+  };
 
-  onVoiceUpEvent(e) {
+  onVoiceUpEvent = (e) => {
     console.log("VoiceUp", e)
-  }
+  };
 
-  onVoiceDownEvent(e) {
+  onVoiceDownEvent = (e) => {
     console.log("VoiceDown", e)
-  }
+  };
 
 
   render() {
@@ -102,7 +109,7 @@ export default class MediaPlayer extends Component {
             <Screen />
           </div>
           <div className={styles.playlistContainer}>
-            <Playlist />
+            <Playlist onItemClick={this.onItemClickEvent}/>
           </div>
         </div>
         <div className={styles.controlPanelContainer}>

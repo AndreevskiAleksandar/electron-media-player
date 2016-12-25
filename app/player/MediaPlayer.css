@@ -1,16 +1,18 @@
 .screenContainer {
   display: inline-block;
   width: 70%;
-  height: 500px;
+  height: 80%;
 }
 
 .playlistContainer {
   display: inline-block;
   width: 30%;
-  height: 500px;
+  height: 80%;
+  overflow-y: auto;
 }
 
 .controlPanelContainer {
   width: 100%;
+  height: 20%;
 }
 
