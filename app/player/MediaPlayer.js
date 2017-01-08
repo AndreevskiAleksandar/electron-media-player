@@ -15,27 +15,89 @@ export default class MediaPlayer extends Component {
     this.state = {source: null};
   }
 
+  componentDidMount() {
+    this.canvas = document.querySelector('#canvas');
+    this.canvasCtx = this.canvas.getContext("2d");
+  }
+
+
+  visualise = () => {
+    let WIDTH = this.canvas.width;
+    let HEIGHT = this.canvas.height;
+
+
+    this.analyserNode.fftSize = 512;
+    var bufferLength = this.analyserNode.fftSize;
+    console.log(bufferLength);
+    var dataArray = new Uint8Array(bufferLength);
+
+    this.canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    this.drawVisual;
+    let draw = () => {
+      console.log("draw");
+      this.drawVisual = requestAnimationFrame(draw);
+      this.analyserNode.getByteTimeDomainData(dataArray);
+
+      this.canvasCtx.fillStyle = 'rgb(200, 200, 200)';
+      this.canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      this.canvasCtx.lineWidth = 2;
+      this.canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
+
+      this.canvasCtx.beginPath();
+
+      var sliceWidth = WIDTH * 1.0 / bufferLength;
+      var x = 0;
+
+      for (var i = 0; i < bufferLength; i++) {
+
+        var v = dataArray[i] / 128.0;
+        var y = v * HEIGHT / 2;
+
+        if (i === 0) {
+          this.canvasCtx.moveTo(x, y);
+        } else {
+          this.canvasCtx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+      }
+
+      this.canvasCtx.lineTo(canvas.width, canvas.height / 2);
+      this.canvasCtx.stroke();
+    };
+
+    draw();
+  };
 
   stop = () => {
-    this.state.source.stop();
+    if (this.state.source) {
+      this.state.source.stop();
+    }
+    window.cancelAnimationFrame(this.drawVisual);
   };
 
   play = (buffer) => {
-    if (this.state.source) {
-      this.stop();
-    }
-    if (!this.audioContext.createGain)
+    this.stop();
+
+    if (!this.audioContext.createGain) {
       this.audioContext.createGain = this.audioContext.createGainNode;
+    }
     this.gainNode = this.audioContext.createGain();
+    this.analyserNode = this.audioContext.createAnalyser();
+    console.log("analyser", this.analyserNode);
     // Create a source node from the buffer
     let source = this.audioContext.createBufferSource();
     source.buffer = buffer;
     this.setState({source});
     // Connect to the final output node (the speakers)
-    this.state.source.connect(this.gainNode);
+    this.state.source.connect(this.analyserNode);
+    this.analyserNode.connect(this.gainNode);
+
     this.gainNode.connect(this.audioContext.destination);
     // Play immediately
     this.state.source.start(0);
+    this.visualise();
   };
 
 
@@ -56,8 +118,11 @@ export default class MediaPlayer extends Component {
     if (this.state.source) {
       this.stop();
     }
-    fs.openSync(`${file}`, 'r'); //throws error if file doesn't exist
-    var data = fs.readFileSync(`${file}`); //file exists, get the contents
+    if (!file) {
+      return;
+    }
+    fs.openSync(`${file.fullName}`, 'r'); //throws error if file doesn't exist
+    var data = fs.readFileSync(`${file.fullName}`); //file exists, get the contents
     this.playByteArray(data);
   };
 
@@ -103,16 +168,17 @@ export default class MediaPlayer extends Component {
 
   render() {
     return (
-      <div style={{border: '2px solid green'}}>
-        <div style={{width: '100%'}}>
+      <div className={styles.playerContainer}>
+        <main className={styles.mainContainer}>
           <div className={styles.screenContainer}>
-            <Screen />
+            <canvas id="canvas" width="600px" height="200px" style={{border: "2px solid blue"}}/>
+
           </div>
           <div className={styles.playlistContainer}>
-            <Playlist onItemClick={this.onItemClickEvent}/>
+            <Playlist onItemClick={this.onItemClickEvent} stop={this.stop}/>
           </div>
-        </div>
-        <div className={styles.controlPanelContainer}>
+        </main>
+        <footer className={styles.controlPanelContainer}>
           <ControlPanel
             onPlay={this.onPlayEvent}
             onPrevious={this.onPreviousEvent}
@@ -123,7 +189,7 @@ export default class MediaPlayer extends Component {
             onVoiceUp={this.onVoiceUpEvent}
             onVoiceDown={this.onVoiceDownEvent}
           />
-        </div>
+        </footer>
       </div>
     );
   }
