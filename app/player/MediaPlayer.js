@@ -4,6 +4,7 @@ import ControlPanel from './ControlPanel';
 import Screen from './Screen';
 import styles from './MediaPlayer.css';
 import fs from 'fs';
+import path from 'path';
 
 export default class MediaPlayer extends Component {
 
@@ -12,7 +13,11 @@ export default class MediaPlayer extends Component {
     super(props);
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();// define audio context
     // this.gainNode = this.audioContext.createGain(); // see if this is needed or needs recreation on every new song
-    this.state = {source: null};
+    this.state = {
+      source: null,
+      playlistFiles: [],
+      currentSong: null
+    };
   }
 
   componentDidMount() {
@@ -85,7 +90,7 @@ export default class MediaPlayer extends Component {
     }
     this.gainNode = this.audioContext.createGain();
     this.analyserNode = this.audioContext.createAnalyser();
-    console.log("analyser", this.analyserNode);
+
     // Create a source node from the buffer
     let source = this.audioContext.createBufferSource();
     source.buffer = buffer;
@@ -97,7 +102,7 @@ export default class MediaPlayer extends Component {
     this.gainNode.connect(this.audioContext.destination);
     // Play immediately
     this.state.source.start(0);
-    this.visualise();
+    //this.visualise();
   };
 
 
@@ -115,14 +120,18 @@ export default class MediaPlayer extends Component {
   };
 
   playAudioFile = (file) => {
-    if (this.state.source) {
-      this.stop();
-    }
     if (!file) {
       return;
     }
-    fs.openSync(`${file.fullName}`, 'r'); //throws error if file doesn't exist
-    var data = fs.readFileSync(`${file.fullName}`); //file exists, get the contents
+    if (this.state.source) {
+      this.stop();
+    }
+
+    // var openSync = fs.openSync(`${file.fullName}`, 'r'); //throws error if file doesn't exist
+    var data = fs.readFileSync(file.fullName); //file exists, get the contents
+    this.setState({
+      currentSong: file
+    });
     this.playByteArray(data);
   };
 
@@ -133,11 +142,16 @@ export default class MediaPlayer extends Component {
   };
 
   onPreviousEvent = (e) => {
-    console.log("Previous", e)
+    let index = this.findCurrentSongIndex();
+    index = (index - 1) % this.state.playlistFiles.length;
+    index = index < 0 ? this.state.playlistFiles.length - 1 : index;
+    this.playAudioFile(this.state.playlistFiles[index]);
   };
 
   onNextEvent = (e) => {
-    console.log("Next", e)
+    let index = this.findCurrentSongIndex();
+    index = (index + 1) % this.state.playlistFiles.length;
+    this.playAudioFile(this.state.playlistFiles[index]);
   };
 
   onPlayEvent = (e) => {
@@ -165,6 +179,44 @@ export default class MediaPlayer extends Component {
     console.log("VoiceDown", e)
   };
 
+  findCurrentSongIndex = () => {
+    let index = this.state.playlistFiles.findIndex((song) => {
+      if (song.fullName === this.state.currentSong.fullName) {
+        return true;
+      }
+      return false;
+    });
+    return index;
+  };
+
+  updatePlaylist = (fileNames, append) => {
+    if (append) {
+      this.setState({
+        playlistFiles: Array.concat(this.state.playlistFiles, fileNames.map((file) => {
+          return this.filenameToFileObject(file);
+        }))
+      });
+    } else {
+      this.setState({
+        playlistFiles: fileNames.map((file) => {
+          return this.filenameToFileObject(file);
+        })
+      });
+      this.stop();
+    }
+
+  };
+
+  filenameToFileObject = (file) => {
+    return {
+      fullName: file,
+      shortName: this.getFileShortName(file)
+    };
+  };
+
+  getFileShortName = (file) => {
+    return file.substring(file.lastIndexOf(path.sep) + 1);
+  };
 
   render() {
     return (
@@ -175,7 +227,8 @@ export default class MediaPlayer extends Component {
 
           </div>
           <div className={styles.playlistContainer}>
-            <Playlist onItemClick={this.onItemClickEvent} stop={this.stop}/>
+            <Playlist playlistFiles={this.state.playlistFiles} onItemClick={this.onItemClickEvent}
+                      updatePlaylist={this.updatePlaylist} currentSong={this.state.currentSong}/>
           </div>
         </main>
         <footer className={styles.controlPanelContainer}>

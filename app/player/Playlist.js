@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import path from 'path';
 import styles from './MediaPlayer.css';
 import {remote} from 'electron';
 
@@ -7,7 +6,6 @@ export default class Playlist extends Component {
 
   constructor() {
     super();
-    this.state = {files: []};
   }
 
   onItemClickEvent = (item) => {
@@ -15,47 +13,31 @@ export default class Playlist extends Component {
   };
 
   renderList = () => {
-    return this.state.files.map((item) =>
+    return this.props.playlistFiles.map((item) =>
       <li className={styles.playlistItem} key={item.fullName} onClick={() => this.onItemClickEvent(item)}>
         {item.shortName}
       </li>);
   };
 
-  getFileShortName = (file) => {
-    return file.substring(file.lastIndexOf(path.sep) + 1);
-  };
 
   openFiles = () => {
     remote.dialog.showOpenDialog({properties: ['multiSelections']},
       (fileNames) => {
         if (fileNames === undefined) return;
-
-        this.setState({
-          files: fileNames.map((file) => {
-            return {
-              fullName: file,
-              shortName: this.getFileShortName(file)
-            };
-          })
-        });
-        this.props.stop();
+        this.props.updatePlaylist(fileNames, false);
       });
-
   };
 
   addFiles = () => {
     remote.dialog.showOpenDialog({properties: ['multiSelections']},
       (fileNames) => {
         if (fileNames === undefined) return;
-
-        this.setState({files: Array.concat(this.state.files, fileNames)});
+        this.props.updatePlaylist(fileNames, true);
       });
-
   };
 
   clearList = () => {
-    this.setState({files: []});
-    this.props.stop();
+    this.props.updatePlaylist([], false);
   };
 
   render() {
